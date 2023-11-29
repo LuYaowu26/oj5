@@ -1,0 +1,120 @@
+#include<stdio.h>
+#include<string.h>//调用memset函数使数组置零变为O（1）复杂度
+#pragma warning(disable:4996)
+int visited[65537] = { 0 };//被访问过的点//
+int edge[1050000];//用于存储指向的点，边总数小于2^20//
+bool edge_connected[1050000];//用于检测是否连通//
+int position[65537];//用于指向下一个点指向的其它点开始的位置//
+bool flag = 1;//用于统计是否遍历完所有点//
+bool flag1 = 1;
+int startnum, endnum;//当缺损一条边时由start指向end//
+void setArrayToZero(int* arr, int size) {
+	memset(arr, 0, size * sizeof(int));
+}//数组归零//
+int dfs(int v) {//v代表结点的下标
+	if (visited[v] == 1)
+		return 0;
+	else
+	{
+		visited[v] = 1;
+		int i;
+		for (i = position[v]; i < position[v + 1]; i++) {//由一个开始到另一个截止//
+			edge_connected[i] = dfs(edge[i]);//测试这个边的连通性就看它连接的点//
+		}
+		return 1;
+	}
+}//深度优先遍历//
+int xdfs(int v ,int start ,int end) {
+	if (visited[v] == 1)
+		return 0;
+	else
+	{
+		visited[v] = 1;
+		int i;
+		for (i = position[v]; i < position[v + 1]; i++) 
+		{//由一个开始到另一个截止//
+			if (v==start&&edge[i]==end)
+			{
+				continue;
+			}
+			else
+			{
+                  xdfs(edge[i], start, end);
+			}//测试这个边的连通性就看它连接的点//
+		}
+		return 1;
+	}
+}//去掉一条边的深度优先遍历//
+int main()
+{
+	int n, m;//n个节点，m个可能损坏的信道//
+	int i, j, k;
+	int edgenum;
+	int sum = 0;
+	scanf("%d %d", &n, &m);
+	for (i = 0; i < n; i++)
+	{
+		position[i] = sum;
+		scanf("%d", &edgenum);
+		for (j = sum; j < sum + edgenum; j++)
+		{
+			scanf("%d", &edge[j]);
+		}
+		sum += edgenum;
+	}//读入所有的边//
+	position[n] = sum;
+	dfs(0);//从0开始//
+	for (i = 0; i < n; i++)
+		if (visited[i] == 0)//判断是否没有遍历到
+		{
+			flag = 0;//一旦有没有遍历到的，flag变为假
+		}
+	if (flag == 1)//如果是联通的
+	{
+		printf("1\n");
+		for (i = 0; i < m; i++)
+		{
+			scanf("%d %d", &startnum, &endnum);
+			flag1 = 1;
+			for (j = position[startnum]; j < position[startnum + 1]; j++)
+			{
+				if (edge[j] == endnum)//当这条边在图里//
+				{
+					if (edge_connected[j])//并且在原本的树里时//
+					{
+						setArrayToZero(visited,n);//数组归零//
+						xdfs(0, startnum, endnum);
+						for (k = 0; k < n; k++)
+							if (visited[k] == 0)
+							{
+								flag1 = 0;
+								break;
+							}
+						if (flag1 == 0)
+						{
+							printf("0\n");
+							break;
+						}
+						else
+						{
+							printf("1\n");
+							break;
+						}
+					}
+					else//如果本来就不在树里//
+					{
+						printf("1\n");
+						break;
+					}
+				}
+			}
+		}
+	}
+	else//如果不是联通的//
+	{
+		printf("0\n");
+		for (i = 0; i < m; i++)
+			printf("0\n");
+	}
+	return 0;
+}
